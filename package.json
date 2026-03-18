@@ -1,0 +1,22 @@
+{
+  "name": "mercuriusdream-blog",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy": "astro build && gh-pages -d dist"
+  },
+  "dependencies": {
+    "@astrojs/react": "^5.0.0",
+    "@astrojs/sitemap": "^3.7.1",
+    "astro": "^6.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.1.1"
+  }
+}

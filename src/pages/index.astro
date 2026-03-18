@@ -1,0 +1,86 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import Footer from "../components/Footer.astro";
+
+const posts = (await getCollection("posts")).sort((a, b) =>
+    b.data.date > a.data.date ? 1 : -1,
+);
+
+const featured = posts.slice(0, 3);
+
+function formatDate(dateStr: string) {
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+}
+---
+
+<Base title="MercuriusDream" description="Security, development & research — a journal by MercuriusDream">
+    <div class="landing-page">
+        <!-- Hero — flex: 3 (~75vh) -->
+        <section class="landing-hero">
+            <div class="landing-hero-inner anim-in anim-d0">
+                <p class="landing-kicker">Journal</p>
+                <h1 class="landing-title">MercuriusDream</h1>
+                <p class="landing-subtitle">Thoughts on security, development & research</p>
+                <a href="/posts/" class="landing-cta" id="landing-cta">
+                    <span>Read the journal</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </a>
+            </div>
+        </section>
+
+        <!-- Parchment strip — flex: 1 (~25vh), 3 posts horizontal -->
+        <section class="landing-strip">
+            <div class="landing-strip-inner">
+                <h2 class="landing-section-title anim-in anim-d1">Recent</h2>
+
+                <div class="landing-strip-posts">
+                    {featured.map((post, i) => (
+                        <a
+                            href={`/posts/${post.id}/`}
+                            class={`landing-strip-card anim-in anim-d${i + 2}`}
+                        >
+                            <span class="landing-strip-date">{formatDate(post.data.date)}</span>
+                            <span class="landing-strip-title">{post.data.title}</span>
+                        </a>
+                    ))}
+                </div>
+            </div>
+            <Footer />
+        </section>
+    </div>
+
+    <script is:inline>
+        document.getElementById('landing-cta')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = document.querySelector('.landing-page');
+            const strip = document.querySelector('.landing-strip');
+            if (!page || !strip) return window.location.href = '/posts/';
+
+            // Snapshot current top before going fixed
+            const rect = strip.getBoundingClientRect();
+            strip.style.top = rect.top + 'px';
+            strip.style.position = 'fixed';
+            strip.style.left = '0';
+            strip.style.right = '0';
+            strip.style.bottom = '0';
+            strip.style.zIndex = '100';
+
+            // Force reflow, then animate to top: 0
+            strip.offsetHeight;
+            page.classList.add('expanding');
+
+            setTimeout(() => {
+                window.location.href = '/posts/';
+            }, 500);
+        });
+    </script>
+</Base>

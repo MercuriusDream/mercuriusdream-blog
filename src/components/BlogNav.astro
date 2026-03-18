@@ -1,0 +1,91 @@
+<nav class="blog-nav" id="blog-nav" transition:persist>
+  <a href="/" class="nav-brand">
+    <div id="nav-logo" class="nav-logo-container"></div>
+    <span class="nav-title">MercuriusDream</span>
+  </a>
+</nav>
+
+<script is:inline>
+  // Scroll handler — only bind once
+  if (!window.__navScrollBound) {
+    window.__navScrollBound = true;
+    window.addEventListener('scroll', () => {
+      const nav = document.getElementById('blog-nav');
+      if (window.scrollY > 40) {
+        nav?.classList.add('scrolled');
+      } else {
+        nav?.classList.remove('scrolled');
+      }
+    }, { passive: true });
+  }
+
+  // Logo SVG — only load once (nav persists across transitions)
+  if (!window.__navLogoLoaded) {
+    window.__navLogoLoaded = true;
+
+    (async function loadNavLogo() {
+      const container = document.getElementById('nav-logo');
+      if (!container || container.children.length > 0) return;
+
+      try {
+        const res = await fetch('/logo.svg');
+        const text = await res.text();
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(text, 'image/svg+xml');
+        const svg = svgDoc.querySelector('svg');
+        if (!svg) return;
+
+        const clone = svg.cloneNode(true);
+        clone.setAttribute('width', '100%');
+        clone.setAttribute('height', '100%');
+
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+        grad.setAttribute('id', 'nav-monet');
+        grad.setAttribute('x1', '0%');
+        grad.setAttribute('y1', '0%');
+        grad.setAttribute('x2', '100%');
+        grad.setAttribute('y2', '100%');
+        ['#E8C490', '#D4A07A', '#B0A8C0', '#8EAFC4'].forEach((color, i) => {
+          const stop = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+          stop.setAttribute('offset', `${(i / 3) * 100}%`);
+          stop.setAttribute('stop-color', color);
+          stop.setAttribute('stop-opacity', '1');
+          grad.appendChild(stop);
+        });
+        defs.appendChild(grad);
+        clone.prepend(defs);
+
+        const styleTag = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+        styleTag.textContent = `
+          @keyframes navDraw { to { stroke-dashoffset: 0; } }
+          .nav-draw { animation: navDraw 2.5s cubic-bezier(0.4,0,0.2,1) forwards; }
+        `;
+        clone.prepend(styleTag);
+
+        const paths = clone.querySelectorAll('path, circle');
+        paths.forEach((p, i) => {
+          p.setAttribute('stroke', 'url(#nav-monet)');
+          p.setAttribute('stroke-width', '2');
+          const fill = p.getAttribute('fill');
+          if (fill && fill !== 'none') {
+            p.setAttribute('fill', 'url(#nav-monet)');
+            p.setAttribute('fill-opacity', '0.25');
+          }
+          try {
+            const len = p.getTotalLength?.();
+            if (len) {
+              p.style.strokeDasharray = len;
+              p.style.strokeDashoffset = len;
+              p.classList.add('nav-draw');
+              p.style.animationDelay = `${0.2 + i * 0.12}s`;
+            }
+          } catch (e) {}
+        });
+
+        container.innerHTML = '';
+        container.appendChild(clone);
+      } catch (e) {}
+    })();
+  }
+</script>

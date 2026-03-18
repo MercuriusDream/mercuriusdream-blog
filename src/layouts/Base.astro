@@ -1,0 +1,52 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import '../styles/global.css';
+import BlogNav from '../components/BlogNav.astro';
+import WatercolorBackground from '../components/WatercolorBackground.astro';
+import SnowCanvas from '../components/react/SnowCanvas.jsx';
+import LogoBackground from '../components/react/LogoBackground.jsx';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Thoughts on security, development & research' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={description} />
+  <meta name="theme-color" content="#121921" />
+
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&family=Noto+Sans+KR:wght@300;400;500&display=swap"
+    rel="stylesheet">
+
+  <ClientRouter />
+  <title>{title}</title>
+</head>
+
+<body>
+  <div class="app">
+    <WatercolorBackground />
+    <LogoBackground client:load transition:persist />
+    <SnowCanvas client:load transition:persist />
+    <BlogNav />
+
+    <div class="app-content">
+      <slot />
+    </div>
+  </div>
+</body>
+</html>

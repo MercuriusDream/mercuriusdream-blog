@@ -1,0 +1,173 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Footer from "../../components/Footer.astro";
+
+const posts = (await getCollection("posts")).sort((a, b) =>
+    b.data.date > a.data.date ? 1 : -1,
+);
+
+const allTags = [...new Set(posts.flatMap((p) => p.data.tags))].sort();
+
+function formatDate(dateStr: string) {
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+}
+
+function estimateReadTime(body: string) {
+    const words = body.trim().split(/\s+/).length;
+    return Math.max(1, Math.round(words / 200));
+}
+---
+
+<Base title="MercuriusDream Blog">
+    <div class="blog-page">
+        <!-- Dark header over watercolor -->
+        <div
+            class="list-header-dark"
+            transition:name="page-header"
+        >
+            <h1 transition:name="page-title">Journal</h1>
+            <p>Thoughts on security, development &amp; research</p>
+        </div>
+
+        <!-- Parchment starts here -->
+        <div
+            class="parchment-column"
+            transition:name="parchment"
+        >
+            <!-- Tag filter bar -->
+            <div class="tag-filter-bar" id="tag-filter">
+                <button class="tag-filter-btn active" data-tag="all">All</button
+                >
+                {
+                    allTags.map((tag) => (
+                        <button class="tag-filter-btn" data-tag={tag}>
+                            {tag}
+                        </button>
+                    ))
+                }
+            </div>
+
+            <div class="posts-list" id="posts-list" transition:animate="fade">
+                {
+                    posts.map((post, i) => (
+                        <a
+                            href={`/posts/${post.id}/`}
+                            class="post-row"
+                            data-tags={post.data.tags.join(",")}
+                        >
+                            <div class="post-row-top">
+                                <h2
+                                    class="post-row-title"
+                                    transition:name={`title-${post.id}`}
+                                >
+                                    {post.data.title}
+                                </h2>
+                                <svg
+                                    class="post-row-arrow"
+                                    width="22"
+                                    height="22"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <>
+                                        <line x1="7" y1="17" x2="17" y2="7" />
+                                        <polyline points="7 7 17 7 17 17" />
+                                    </>
+                                </svg>
+                            </div>
+                            <p class="post-row-excerpt">{post.data.excerpt}</p>
+                            <div class="post-row-meta">
+                                <span class="post-row-date">
+                                    {formatDate(post.data.date)}
+                                </span>
+                                <span class="post-row-read-time">
+                                    <svg
+                                        width="11"
+                                        height="11"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <>
+                                            <circle cx="12" cy="12" r="10" />
+                                            <polyline points="12 6 12 12 16 14" />
+                                        </>
+                                    </svg>
+                                    {estimateReadTime(post.body ?? "")} min
+                                </span>
+                                <div class="post-row-tags">
+                                    {post.data.tags.map((t) => (
+                                        <span class="tag">{t}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        </a>
+                    ))
+                }
+            </div>
+
+            <div class="no-posts" id="no-posts" style="display: none;">
+                <p>No posts found for this tag</p>
+            </div>
+
+            <Footer />
+        </div>
+    </div>
+</Base>
+
+<script>
+    function initTagFilter() {
+        const filterBar = document.getElementById("tag-filter");
+        const postsList = document.getElementById("posts-list");
+        const noPosts = document.getElementById("no-posts");
+
+        filterBar?.addEventListener("click", (e) => {
+            const btn = (e.target as HTMLElement).closest(
+                ".tag-filter-btn",
+            ) as HTMLElement | null;
+            if (!btn) return;
+
+            const tag = btn.dataset.tag;
+
+            filterBar
+                .querySelectorAll(".tag-filter-btn")
+                .forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const rows = postsList?.querySelectorAll(
+                ".post-row",
+            ) as NodeListOf<HTMLElement>;
+            let visible = 0;
+
+            rows?.forEach((row) => {
+                const tags = row.dataset.tags?.split(",") || [];
+                if (tag === "all" || tags.includes(tag!)) {
+                    row.style.display = "";
+                    visible++;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            if (noPosts) {
+                noPosts.style.display = visible === 0 ? "" : "none";
+            }
+        });
+    }
+
+    initTagFilter();
+    document.addEventListener("astro:after-swap", initTagFilter);
+</script>
